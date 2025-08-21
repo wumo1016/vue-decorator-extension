@@ -152,6 +152,6 @@ function loadTsConfig(rootDir: string) {
   if (!rootDir) return
   const tsconfigPath = path.resolve(rootDir, 'tsconfig.json')
   if (!fs.existsSync(tsconfigPath)) return null
-  const raw = JSON.parse(fs.readFileSync(tsconfigPath, 'utf-8')) as TsConfig
-  return raw.compilerOptions ?? {}
+  const { config } = ts.readConfigFile(tsconfigPath, ts.sys.readFile)
+  return config.compilerOptions ?? {}
 }
