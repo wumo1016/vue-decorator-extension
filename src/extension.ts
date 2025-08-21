@@ -14,7 +14,10 @@ export function activate(context: vscode.ExtensionContext) {
         if (!wordRange) return null
         const word = document.getText(wordRange)
         const filePath = document.uri.fsPath
-        const map = parseVueClassComponents(filePath)
+        const rootDir = vscode.workspace.getWorkspaceFolder(
+          vscode.Uri.file(filePath)
+        )?.uri?.fsPath
+        const map = parseVueClassComponents(filePath, rootDir)
         if (map[word]) {
           return new vscode.Location(
             vscode.Uri.file(map[word]),
