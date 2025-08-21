@@ -1,14 +1,21 @@
 {
   "name": "vue-decorator-extension",
   "displayName": "vue-decorator-extension",
-  "description": "",
+  "publisher": "wumo1016",
+  "description": "Vue tooling for VS Code",
   "version": "1.0.0",
+  "icon": "asset/vue.png",
+  "author": "Wu Mo <760478279wyb@gmail.com>",
   "engines": {
     "vscode": "^1.103.0"
   },
   "categories": [
     "Other"
   ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/wumo1016/vue-decorator-extension.git"
+  },
   "activationEvents": [
     "onLanguage:vue"
   ],
