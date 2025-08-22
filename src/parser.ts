@@ -132,10 +132,10 @@ function resolveFilePath({
 
   if (tsConfig.paths) {
     for (const [alias, targets] of Object.entries(tsConfig.paths)) {
-      const prefix = alias.replace('/*', '')
+      const prefix = alias.replace('*', '')
       if (filePath.startsWith(prefix)) {
         const rest = filePath.slice(prefix.length)
-        const target = targets[0].replace('/*', rest)
+        const target = targets[0].replace('*', rest)
         return path.resolve(baseUrl, target)
       }
     }
