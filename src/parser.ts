@@ -51,6 +51,7 @@ export function parseVueClassComponents(
                         rootDir,
                         sourceFile: sourceFile,
                         symbolName,
+                        filePath,
                         fileDir: path.dirname(filePath),
                         tsCompilerOptions
                       })
@@ -75,11 +76,13 @@ function resolveImportPath({
   tsCompilerOptions,
   sourceFile,
   symbolName,
+  filePath,
   fileDir
 }: {
   rootDir: string
   sourceFile: ts.SourceFile
   symbolName: string
+  filePath: string
   fileDir: string
   tsCompilerOptions
 }) {
@@ -102,13 +105,27 @@ function resolveImportPath({
       }
     }
   })
+
   if (moduleText) {
-    return resolveFilePath({
-      rootDir,
-      tsCompilerOptions,
-      fileDir,
-      filePath: moduleText
-    })
+    const resolvedFileName = ts.resolveModuleName(
+      moduleText,
+      path.resolve(__dirname, filePath),
+      {
+        ...tsCompilerOptions,
+        moduleResolution: ts.ModuleResolutionKind.Node10
+      },
+      ts.sys
+    ).resolvedModule?.resolvedFileName
+
+    return (
+      resolvedFileName ||
+      resolveFilePath({
+        rootDir,
+        tsCompilerOptions,
+        fileDir,
+        filePath: moduleText
+      })
+    )
   }
   return moduleText
 }
