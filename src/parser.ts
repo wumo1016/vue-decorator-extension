@@ -2,6 +2,7 @@
 import ts from 'typescript'
 import * as path from 'path'
 import * as fs from 'fs'
+import { resolveImportRecursive } from './resolveImportRecursive'
 
 export interface ComponentMap {
   [name: string]: string // 组件名 -> 路径
@@ -25,7 +26,7 @@ export function parseVueClassComponents(
     ts.ScriptKind.TS
   )
 
-  const tsCompilerOptions = getTsCompilerOptions(rootDir) || {}
+  const compilerOptions = getTsCompilerOptions(rootDir) || {}
 
   sourceFile.forEachChild(node => {
     if (ts.isClassDeclaration(node)) {
@@ -53,7 +54,7 @@ export function parseVueClassComponents(
                         symbolName,
                         filePath,
                         fileDir: path.dirname(filePath),
-                        tsCompilerOptions
+                        compilerOptions
                       })
                     }
                   }
@@ -73,7 +74,7 @@ export function parseVueClassComponents(
  */
 function resolveImportPath({
   rootDir,
-  tsCompilerOptions,
+  compilerOptions,
   sourceFile,
   symbolName,
   filePath,
@@ -84,7 +85,7 @@ function resolveImportPath({
   symbolName: string
   filePath: string
   fileDir: string
-  tsCompilerOptions
+  compilerOptions
 }) {
   let moduleText = ''
   sourceFile.statements.forEach(stmt => {
@@ -107,25 +108,23 @@ function resolveImportPath({
   })
 
   if (moduleText) {
-    const resolvedFileName = ts.resolveModuleName(
-      moduleText,
-      path.resolve(__dirname, filePath),
-      {
-        ...tsCompilerOptions,
-        moduleResolution: ts.ModuleResolutionKind.Node10
-      },
-      ts.sys
-    ).resolvedModule?.resolvedFileName
-
-    return (
-      resolvedFileName ||
-      resolveFilePath({
-        rootDir,
-        tsCompilerOptions,
-        fileDir,
-        filePath: moduleText
+    if (!moduleText.endsWith('.vue')) {
+      return resolveImportRecursive({
+        symbolName,
+        filePath: path.resolve(fileDir, filePath),
+        modulePath: moduleText,
+        compilerOptions: {
+          ...compilerOptions,
+          moduleResolution: ts.ModuleResolutionKind.Node10
+        }
       })
-    )
+    }
+    return resolveFilePath({
+      rootDir,
+      compilerOptions,
+      fileDir,
+      filePath: moduleText
+    })
   }
   return moduleText
 }
@@ -135,20 +134,20 @@ function resolveImportPath({
  */
 function resolveFilePath({
   rootDir,
-  tsCompilerOptions,
+  compilerOptions,
   fileDir,
   filePath
 }: {
   rootDir: string
-  tsCompilerOptions: Object
+  compilerOptions: Object
   filePath: string
 }) {
-  const baseUrl = tsCompilerOptions.baseUrl
-    ? path.resolve(rootDir, tsCompilerOptions.baseUrl)
+  const baseUrl = compilerOptions.baseUrl
+    ? path.resolve(rootDir, compilerOptions.baseUrl)
     : rootDir
 
-  if (tsCompilerOptions.paths) {
-    for (const [alias, targets] of Object.entries(tsCompilerOptions.paths)) {
+  if (compilerOptions.paths) {
+    for (const [alias, targets] of Object.entries(compilerOptions.paths)) {
       const prefix = alias.replace('*', '')
       if (filePath.startsWith(prefix)) {
         const rest = filePath.slice(prefix.length)
