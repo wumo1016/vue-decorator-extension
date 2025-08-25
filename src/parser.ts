@@ -116,7 +116,14 @@ function resolveImportPath({
         compilerOptions: {
           ...compilerOptions,
           moduleResolution: ts.ModuleResolutionKind.Node10
-        }
+        },
+        resolveFilePath: (fileDir: string, filePath: string) =>
+          resolveFilePath({
+            rootDir,
+            compilerOptions,
+            fileDir,
+            filePath
+          })
       })
     }
     return resolveFilePath({

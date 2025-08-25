@@ -9,20 +9,29 @@ export function resolveImportRecursive({
   symbolName,
   filePath,
   modulePath,
-  compilerOptions
+  compilerOptions,
+  resolveFilePath
 }: {
   symbolName: string
   filePath: string
   modulePath: string
   compilerOptions: ts.CompilerOptions
+  resolveFilePath: Function
 }) {
   const resolved = ts.resolveModuleName(
-    modulePath,
+    resolveFilePath(path.dirname(filePath), modulePath),
     filePath,
     compilerOptions,
     ts.sys
   )
   const moduleAbsPath = resolved.resolvedModule?.resolvedFileName
+
+  console.log(
+    '🚀 ~ resolveImportRecursive ~ moduleAbsPath:',
+    modulePath,
+    filePath,
+    moduleAbsPath
+  )
 
   if (!moduleAbsPath) {
     return
@@ -30,6 +39,7 @@ export function resolveImportRecursive({
 
   // 读取文件 AST
   const code = fs.readFileSync(moduleAbsPath, 'utf-8')
+  // console.log('🚀 ~ resolveImportRecursive ~ code:', code)
 
   const sourceFile = ts.createSourceFile(
     moduleAbsPath,
@@ -38,6 +48,8 @@ export function resolveImportRecursive({
     true,
     ts.ScriptKind.TS
   )
+
+  // console.log('🚀 ~ resolveImportRecursive ~ sourceFile:', sourceFile)
 
   if (!sourceFile) return
 
@@ -55,7 +67,7 @@ export function resolveImportRecursive({
         const localName = node.importClause.name.text
         importMap.set(
           localName,
-          path.resolve(path.dirname(moduleAbsPath), modulePath)
+          resolveFilePath(path.dirname(moduleAbsPath), modulePath)
         )
       } else if (
         node.importClause.namedBindings &&
@@ -65,7 +77,7 @@ export function resolveImportRecursive({
         node.importClause.namedBindings.elements.forEach(el => {
           importMap.set(
             el.name.text,
-            path.resolve(path.dirname(moduleAbsPath), modulePath)
+            resolveFilePath(path.dirname(moduleAbsPath), modulePath)
           )
         })
       }
@@ -77,22 +89,27 @@ export function resolveImportRecursive({
   for (const stmt of sourceFile.statements) {
     // 是否是导出语句
     if (!ts.isExportDeclaration(stmt)) continue
+
     // 是否是从某个文件导出的 是否有 from
     if (stmt.moduleSpecifier) {
       const moduleText = (stmt.moduleSpecifier as ts.StringLiteral).text
       // 导出的符号列表 export { A } from 'xxx'
       if (stmt.exportClause) {
+        console.log('🚀 ~ resolveImportRecursive ~ moduleText1:', moduleText)
         if (ts.isNamedExports(stmt.exportClause)) {
           for (const el of stmt.exportClause.elements) {
             // 别名导出 export { B as A } from 'xxx'
-            const exportName = el.name.text // 别名
-            const localName = el.propertyName?.text ?? exportName // 导入名
+            // 别名
+            const exportName = el.name.text
+            // 导入名
+            const localName = el.propertyName?.text ?? exportName
             if (exportName === symbolName || localName === symbolName) {
               return resolveImportRecursive({
                 symbolName: localName || exportName,
                 filePath: moduleAbsPath,
                 modulePath: moduleText,
-                compilerOptions
+                compilerOptions,
+                resolveFilePath
               })
             }
           }
@@ -100,16 +117,23 @@ export function resolveImportRecursive({
         } else if (ts.isNamespaceExport(stmt.exportClause)) {
           const exportName = stmt.exportClause.name.text
           if (exportName === symbolName) {
+            console.log(
+              '🚀 ~ resolveImportRecursive ~ moduleText1-2:',
+              stmt.exportClause.name.text,
+              path.resolve(path.dirname(moduleAbsPath), moduleText)
+            )
             return path.resolve(path.dirname(moduleAbsPath), moduleText)
           }
         }
         // export * from 'xxx'
       } else {
+        console.log('🚀 ~ resolveImportRecursive ~ moduleText2:', moduleText)
         return resolveImportRecursive({
           symbolName,
           filePath: moduleAbsPath,
           modulePath: moduleText,
-          compilerOptions
+          compilerOptions,
+          resolveFilePath
         })
       }
       // export { A }
@@ -128,7 +152,8 @@ export function resolveImportRecursive({
             symbolName: exportName || localName,
             filePath: moduleAbsPath,
             modulePath: target,
-            compilerOptions
+            compilerOptions,
+            resolveFilePath
           })
         }
       }
