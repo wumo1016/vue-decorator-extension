@@ -1,12 +1,13 @@
 # Change Log
 
-## 1.0.3-1.0.5 (2025-08-25)
+## 1.0.3-1.0.6 (2025-08-25)
 
 ### Bug Fixes
 
 - 修复导入路径别名问题
-- 修复特殊导入问题: 例如 `export { default as A } from 'xxx.vue'`
+- 修复特殊导入问题, 例如: `export { default as A } from 'xxx.vue'`
 - 导入路径处理
+- 处理默认导出的情况, 例如: `export default A`
 
 ## 1.0.2 (2025-08-25)
 
