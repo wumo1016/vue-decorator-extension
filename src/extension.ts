@@ -10,10 +10,10 @@ export function activate(context: vscode.ExtensionContext) {
       provideDefinition(document, position) {
         const wordRange = document.getWordRangeAtPosition(
           position,
-          /[A-Za-z0-9_-]+/
+          /\<[A-Za-z0-9_-]+/
         )
         if (!wordRange) return null
-        const word = pascalCase(document.getText(wordRange))
+        const word = pascalCase(document.getText(wordRange).slice(1))
         const filePath = document.uri.fsPath
         const rootDir = vscode.workspace.getWorkspaceFolder(
           vscode.Uri.file(filePath)
