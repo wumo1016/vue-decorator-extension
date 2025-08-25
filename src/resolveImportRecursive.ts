@@ -104,6 +104,10 @@ export function resolveImportRecursive({
             // 导入名
             const localName = el.propertyName?.text ?? exportName
             if (exportName === symbolName || localName === symbolName) {
+              // export { default as A } from 'xxx.vue'
+              if (moduleText.endsWith('.vue')) {
+                return path.resolve(path.dirname(moduleAbsPath), moduleText)
+              }
               return resolveImportRecursive({
                 symbolName: localName || exportName,
                 filePath: moduleAbsPath,
