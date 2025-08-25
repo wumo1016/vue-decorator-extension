@@ -25,7 +25,7 @@ export function parseVueClassComponents(
     ts.ScriptKind.TS
   )
 
-  const tsConfig = loadTsConfig(rootDir) || {}
+  const tsCompilerOptions = getTsCompilerOptions(rootDir) || {}
 
   sourceFile.forEachChild(node => {
     if (ts.isClassDeclaration(node)) {
@@ -52,7 +52,7 @@ export function parseVueClassComponents(
                         sourceFile: sourceFile,
                         symbolName,
                         fileDir: path.dirname(filePath),
-                        tsConfig
+                        tsCompilerOptions
                       })
                     }
                   }
@@ -72,7 +72,7 @@ export function parseVueClassComponents(
  */
 function resolveImportPath({
   rootDir,
-  tsConfig,
+  tsCompilerOptions,
   sourceFile,
   symbolName,
   fileDir
@@ -81,7 +81,7 @@ function resolveImportPath({
   sourceFile: ts.SourceFile
   symbolName: string
   fileDir: string
-  tsConfig
+  tsCompilerOptions
 }) {
   let moduleText = ''
   sourceFile.statements.forEach(stmt => {
@@ -105,7 +105,7 @@ function resolveImportPath({
   if (moduleText) {
     return resolveFilePath({
       rootDir,
-      tsConfig,
+      tsCompilerOptions,
       fileDir,
       filePath: moduleText
     })
@@ -118,20 +118,20 @@ function resolveImportPath({
  */
 function resolveFilePath({
   rootDir,
-  tsConfig,
+  tsCompilerOptions,
   fileDir,
   filePath
 }: {
   rootDir: string
-  tsConfig: Object
+  tsCompilerOptions: Object
   filePath: string
 }) {
-  const baseUrl = tsConfig.baseUrl
-    ? path.resolve(rootDir, tsConfig.baseUrl)
+  const baseUrl = tsCompilerOptions.baseUrl
+    ? path.resolve(rootDir, tsCompilerOptions.baseUrl)
     : rootDir
 
-  if (tsConfig.paths) {
-    for (const [alias, targets] of Object.entries(tsConfig.paths)) {
+  if (tsCompilerOptions.paths) {
+    for (const [alias, targets] of Object.entries(tsCompilerOptions.paths)) {
       const prefix = alias.replace('*', '')
       if (filePath.startsWith(prefix)) {
         const rest = filePath.slice(prefix.length)
@@ -145,10 +145,10 @@ function resolveFilePath({
 }
 
 /**
- * @description: 加载 ts 配置
+ * @description: 获取 ts 编译配置
  * @param {string} rootDir
  */
-function loadTsConfig(rootDir: string) {
+function getTsCompilerOptions(rootDir: string) {
   if (!rootDir) return
   const tsconfigPath = path.resolve(rootDir, 'tsconfig.json')
   if (!fs.existsSync(tsconfigPath)) return null
