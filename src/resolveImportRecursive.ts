@@ -90,6 +90,24 @@ export function resolveImportRecursive({
 
   // 解析 export
   for (const stmt of sourceFile.statements) {
+    // export default A
+    if (ts.isExportAssignment(stmt) && ts.isIdentifier(stmt.expression)) {
+      const localName = stmt.expression.text
+      if (localName === symbolName) {
+        const target = importMap.get(localName)
+        if (target.endsWith('.vue')) {
+          return target
+        }
+        return resolveImportRecursive({
+          symbolName: localName,
+          filePath: moduleAbsPath,
+          modulePath: target,
+          compilerOptions,
+          resolveFilePath
+        })
+      }
+    }
+
     // 是否是导出语句
     if (!ts.isExportDeclaration(stmt)) continue
 
