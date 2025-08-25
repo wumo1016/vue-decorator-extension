@@ -18,13 +18,16 @@ export function resolveImportRecursive({
   compilerOptions: ts.CompilerOptions
   resolveFilePath: Function
 }) {
-  const resolved = ts.resolveModuleName(
-    resolveFilePath(path.dirname(filePath), modulePath),
-    filePath,
-    compilerOptions,
-    ts.sys
-  )
-  const moduleAbsPath = resolved.resolvedModule?.resolvedFileName
+  modulePath = resolveFilePath(path.dirname(filePath), modulePath)
+
+  const moduleAbsPath = modulePath.endsWith('.vue')
+    ? modulePath
+    : ts.resolveModuleName(
+        resolveFilePath(path.dirname(filePath), modulePath),
+        filePath,
+        compilerOptions,
+        ts.sys
+      ).resolvedModule?.resolvedFileName
 
   console.log(
     '🚀 ~ resolveImportRecursive ~ moduleAbsPath:',
