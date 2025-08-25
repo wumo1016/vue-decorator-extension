@@ -3,7 +3,7 @@
   "displayName": "vue-decorator-extension",
   "publisher": "wumo1016",
   "description": "Vue tooling for VS Code",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "icon": "asset/vue.png",
   "author": "Wu Mo <760478279wyb@gmail.com>",
   "engines": {
