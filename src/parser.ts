@@ -1,5 +1,4 @@
-// @ts-nocheck
-import ts from 'typescript'
+import ts, { CompilerOptions } from 'typescript'
 import * as path from 'path'
 import * as fs from 'fs'
 import { resolveImportRecursive } from './resolveImportRecursive'
@@ -14,7 +13,7 @@ export interface ComponentMap {
  */
 export function parseVueClassComponents(
   filePath: string,
-  rootDir?: string
+  rootDir: string
 ): ComponentMap {
   const componentsMap: ComponentMap = {}
   const code = fs.readFileSync(filePath, 'utf-8')
@@ -32,30 +31,33 @@ export function parseVueClassComponents(
     if (ts.isClassDeclaration(node)) {
       const decorators = ts.getDecorators?.(node) || []
       decorators.forEach(decorator => {
-        const call = decorator.expression
-        if (
-          ts.isIdentifier(call.expression) &&
-          call.expression.text === 'Options'
-        ) {
-          const arg = call.arguments?.[0]
-          if (arg && ts.isObjectLiteralExpression(arg)) {
-            for (const prop of arg.properties) {
-              if (
-                ts.isPropertyAssignment(prop) &&
-                prop.name.text === 'components'
-              ) {
-                if (ts.isObjectLiteralExpression(prop.initializer)) {
-                  for (const p of prop.initializer.properties) {
-                    if (ts.isShorthandPropertyAssignment(p)) {
-                      const symbolName = p.name.text
-                      componentsMap[symbolName] = resolveImportPath({
-                        rootDir,
-                        sourceFile: sourceFile,
-                        symbolName,
-                        filePath,
-                        fileDir: path.dirname(filePath),
-                        compilerOptions
-                      })
+        // 是否为函数调用表达式
+        if (ts.isCallExpression(decorator.expression)) {
+          const call = decorator.expression
+          if (
+            ts.isIdentifier(call.expression) &&
+            call.expression.text === 'Options'
+          ) {
+            const arg = call.arguments?.[0]
+            if (arg && ts.isObjectLiteralExpression(arg)) {
+              for (const prop of arg.properties) {
+                if (
+                  ts.isPropertyAssignment(prop) &&
+                  (prop.name as ts.StringLiteral).text === 'components'
+                ) {
+                  if (ts.isObjectLiteralExpression(prop.initializer)) {
+                    for (const p of prop.initializer.properties) {
+                      if (ts.isShorthandPropertyAssignment(p)) {
+                        const symbolName = p.name.text
+                        componentsMap[symbolName] = resolveImportPath({
+                          rootDir,
+                          sourceFile: sourceFile,
+                          symbolName,
+                          filePath,
+                          fileDir: path.dirname(filePath),
+                          compilerOptions
+                        })
+                      }
                     }
                   }
                 }
@@ -85,7 +87,7 @@ function resolveImportPath({
   symbolName: string
   filePath: string
   fileDir: string
-  compilerOptions
+  compilerOptions: CompilerOptions
 }) {
   let moduleText = ''
   sourceFile.statements.forEach(stmt => {
@@ -146,7 +148,8 @@ function resolveFilePath({
   filePath
 }: {
   rootDir: string
-  compilerOptions: Object
+  compilerOptions: CompilerOptions
+  fileDir: string
   filePath: string
 }) {
   const baseUrl = compilerOptions.baseUrl

@@ -18,7 +18,7 @@ export function activate(context: vscode.ExtensionContext) {
         const rootDir = vscode.workspace.getWorkspaceFolder(
           vscode.Uri.file(filePath)
         )?.uri?.fsPath
-        const map = parseVueClassComponents(filePath, rootDir)
+        const map = parseVueClassComponents(filePath, rootDir!)
         if (map[word]) {
           return new vscode.Location(
             vscode.Uri.file(map[word]),
