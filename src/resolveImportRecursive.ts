@@ -116,7 +116,7 @@ export function resolveImportRecursive({
       const moduleText = (stmt.moduleSpecifier as ts.StringLiteral).text
       // 导出的符号列表 export { A } from 'xxx'
       if (stmt.exportClause) {
-        console.log('🚀 ~ resolveImportRecursive ~ moduleText1:', moduleText)
+        // console.log('🚀 ~ resolveImportRecursive ~ moduleText1:', moduleText)
         if (ts.isNamedExports(stmt.exportClause)) {
           for (const el of stmt.exportClause.elements) {
             // 别名导出 export { B as A } from 'xxx'
@@ -142,17 +142,17 @@ export function resolveImportRecursive({
         } else if (ts.isNamespaceExport(stmt.exportClause)) {
           const exportName = stmt.exportClause.name.text
           if (exportName === symbolName) {
-            console.log(
-              '🚀 ~ resolveImportRecursive ~ moduleText1-2:',
-              stmt.exportClause.name.text,
-              path.resolve(path.dirname(moduleAbsPath), moduleText)
-            )
+            // console.log(
+            //   '🚀 ~ resolveImportRecursive ~ moduleText1-2:',
+            //   stmt.exportClause.name.text,
+            //   path.resolve(path.dirname(moduleAbsPath), moduleText)
+            // )
             return path.resolve(path.dirname(moduleAbsPath), moduleText)
           }
         }
         // export * from 'xxx'
       } else {
-        console.log('🚀 ~ resolveImportRecursive ~ moduleText2:', moduleText)
+        // console.log('🚀 ~ resolveImportRecursive ~ moduleText2:', moduleText)
         return resolveImportRecursive({
           symbolName,
           filePath: moduleAbsPath,
