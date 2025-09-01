@@ -27,6 +27,45 @@ export function parseVueClassComponents(
 
   const compilerOptions = getTsCompilerOptions(rootDir) || {}
 
+
+  /**
+   * @author: wyb
+   * @description: 查找通过 defineComponent 定义的组件
+   * @param {ts} node
+   */
+  function findComponents(node: ts.Node) {
+    if (
+      ts.isCallExpression(node) &&
+      node.expression.getText() === 'defineComponent'
+    ) {
+      const arg = node.arguments[0]
+      if (arg && ts.isObjectLiteralExpression(arg)) {
+        const componentsProp = arg.properties.find(
+          p => ts.isPropertyAssignment(p) && p.name?.getText() === 'components'
+        ) as ts.PropertyAssignment | undefined
+        if (
+          componentsProp &&
+          ts.isObjectLiteralExpression(componentsProp.initializer)
+        ) {
+          componentsProp.initializer.properties
+            .filter(ts.isShorthandPropertyAssignment)
+            .map(p => {
+              const symbolName = p.name.getText()
+              componentsMap[symbolName] = resolveImportPath({
+                rootDir,
+                sourceFile: sourceFile,
+                symbolName,
+                filePath,
+                fileDir: path.dirname(filePath),
+                compilerOptions
+              })
+            })
+        }
+      }
+    }
+    ts.forEachChild(node, findComponents)
+  }
+
   sourceFile.forEachChild(node => {
     if (ts.isClassDeclaration(node)) {
       const decorators = ts.getDecorators?.(node) || []
@@ -66,6 +105,8 @@ export function parseVueClassComponents(
           }
         }
       })
+    } else {
+      // findComponents(node)
     }
   })
   return componentsMap
